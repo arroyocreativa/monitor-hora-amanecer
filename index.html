@@ -57,11 +57,13 @@
     background: var(--surface-1); border: 1px solid var(--border);
     border-radius: 8px; padding: 7px 10px;
   }
+  .date-ctl input[type="date"],
   .date-ctl button {
-    font: inherit; font-size: 13px; color: var(--text-secondary);
+    font: inherit; font-size: 14px; color: var(--text-primary);
     background: var(--surface-1); border: 1px solid var(--border);
-    border-radius: 8px; padding: 7px 12px; cursor: pointer;
+    border-radius: 8px; padding: 10px 16px; cursor: pointer;
   }
+  .date-ctl input[type="date"] { color: var(--text-primary); }
   .date-ctl button:hover { color: var(--text-primary); }
 
   .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
@@ -113,7 +115,7 @@
 <div class="wrap">
   <header>
     <div class="titles">
-      <h1>🌅 ¿Dónde amanece primero?</h1>
+      <h1>🌅 Amanecer, bello amanecer</h1>
       <p class="subtitle">Comparativo de la hora de salida del sol · Bogotá vs. Cali vs. Barranquilla (hora local, GMT−5)</p>
     </div>
     <div class="date-ctl">
@@ -249,7 +251,10 @@ function drawStrip(rows, earliest) {
     const labelY = i % 2 === 0 ? axisY - 58 : axisY - 30;
     const tp = timeParts(r.sunrise);
     s += `<line x1="${cx}" y1="${labelY + 8}" x2="${cx}" y2="${axisY}" stroke="var(--gridline)" stroke-width="1"/>`;
-    s += `<circle class="mark" data-city="${r.name}" data-time="${tp.hm} ${tp.ampm}" cx="${cx}" cy="${axisY}" r="7" fill="${r.color}" stroke="var(--surface-1)" stroke-width="2"/>`;
+    s += `<g class="mark-group" data-city="${r.name}" data-time="${tp.hm} ${tp.ampm}">`;
+    s += `<circle class="mark-bg" cx="${cx}" cy="${axisY}" r="22" fill="transparent"/>`;
+    s += `<circle class="mark" cx="${cx}" cy="${axisY}" r="7" fill="${r.color}" stroke="var(--surface-1)" stroke-width="2"/>`;
+    s += `</g>`;
     s += `<text x="${cx}" y="${labelY - 6}" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-primary)">${r.name}</text>`;
     s += `<text x="${cx}" y="${labelY + 6}" text-anchor="middle" font-size="12" fill="var(--text-secondary)">${tp.hm} ${tp.ampm}</text>`;
   });
@@ -261,14 +266,14 @@ function drawStrip(rows, earliest) {
       ? 'Hoy las tres ciudades amanecen prácticamente al mismo tiempo.'
       : `Entre la primera (${earliest.name}) y la última hay ${span} minutos de diferencia.`;
 
-  svgEl.querySelectorAll('.mark').forEach(m => {
-    m.addEventListener('mousemove', e => {
-      tooltip.innerHTML = `${m.dataset.city} · amanece a las <b>${m.dataset.time}</b>`;
+  svgEl.querySelectorAll('.mark-group').forEach(g => {
+    g.addEventListener('mousemove', e => {
+      tooltip.innerHTML = `${g.dataset.city} · amanece a las <b>${g.dataset.time}</b>`;
       tooltip.style.left = (e.clientX + 12) + 'px';
       tooltip.style.top = (e.clientY - 34) + 'px';
       tooltip.classList.add('show');
     });
-    m.addEventListener('mouseleave', () => tooltip.classList.remove('show'));
+    g.addEventListener('mouseleave', () => tooltip.classList.remove('show'));
   });
 }
 
