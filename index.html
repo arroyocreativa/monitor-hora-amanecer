@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Monitor hora amanecer — Bogotá · Cali · Barranquilla</title>
+<style>
+  :root {
+    --page:           #f9f9f7;
+    --surface-1:      #fcfcfb;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #898781;
+    --gridline:       #e1e0d9;
+    --baseline:       #c3c2b7;
+    --border:         rgba(11,11,11,0.10);
+    --bogota:         #2a78d6;
+    --cali:           #1baf7a;
+    --barranquilla:   #eda100;
+    --chip-bg:        #f0efec;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --page:           #0d0d0d;
+      --surface-1:      #1a1a19;
+      --text-primary:   #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted:     #898781;
+      --gridline:       #2c2c2a;
+      --baseline:       #383835;
+      --border:         rgba(255,255,255,0.10);
+      --bogota:         #3987e5;
+      --cali:           #199e70;
+      --barranquilla:   #c98500;
+      --chip-bg:        #383835;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--page);
+    color: var(--text-primary);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 32px 20px 48px; }
+
+  header { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 16px; margin-bottom: 24px; }
+  header .titles { flex: 1 1 auto; min-width: 240px; }
+  h1 { font-size: 22px; font-weight: 650; margin: 0 0 4px; }
+  .subtitle { font-size: 14px; color: var(--text-secondary); margin: 0; }
+
+  .date-ctl { display: flex; align-items: center; gap: 8px; }
+  .date-ctl label { font-size: 13px; color: var(--text-secondary); }
+  .date-ctl input[type="date"] {
+    font: inherit; font-size: 14px; color: var(--text-primary);
+    background: var(--surface-1); border: 1px solid var(--border);
+    border-radius: 8px; padding: 7px 10px;
+  }
+  .date-ctl button {
+    font: inherit; font-size: 13px; color: var(--text-secondary);
+    background: var(--surface-1); border: 1px solid var(--border);
+    border-radius: 8px; padding: 7px 12px; cursor: pointer;
+  }
+  .date-ctl button:hover { color: var(--text-primary); }
+
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media (max-width: 720px) { .cards { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .card .city { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; }
+  .card .dot { width: 10px; height: 10px; border-radius: 50%; flex: 0 0 auto; }
+  .card .value { font-size: 40px; font-weight: 650; line-height: 1.1; margin: 12px 0 2px; letter-spacing: -0.5px; }
+  .card .ampm { font-size: 18px; font-weight: 500; color: var(--text-secondary); margin-left: 4px; }
+  .card .kicker { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; margin-top: 14px; }
+  .card .delta {
+    display: inline-block; margin-top: 8px; font-size: 13px;
+    background: var(--chip-bg); color: var(--text-secondary);
+    border-radius: 999px; padding: 3px 10px;
+  }
+  .card .meta { margin-top: 16px; border-top: 1px solid var(--gridline); padding-top: 12px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .card .meta div { font-size: 13px; color: var(--text-secondary); }
+  .card .meta b { display: block; font-weight: 600; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+
+  .strip {
+    margin-top: 24px; background: var(--surface-1);
+    border: 1px solid var(--border); border-radius: 12px; padding: 20px;
+  }
+  .strip h2 { font-size: 14px; font-weight: 600; margin: 0 0 4px; }
+  .strip p { font-size: 13px; color: var(--text-secondary); margin: 0 0 8px; }
+  .strip svg { width: 100%; height: auto; display: block; }
+
+  .tooltip {
+    position: fixed; pointer-events: none; z-index: 10;
+    background: var(--surface-1); border: 1px solid var(--border);
+    border-radius: 8px; padding: 6px 10px; font-size: 13px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+    opacity: 0; transition: opacity 80ms;
+  }
+  .tooltip.show { opacity: 1; }
+  .tooltip b { font-variant-numeric: tabular-nums; }
+
+  footer { margin-top: 20px; font-size: 12px; color: var(--text-muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="titles">
+      <h1>🌅 ¿Dónde amanece primero?</h1>
+      <p class="subtitle">Comparativo de la hora de salida del sol · Bogotá vs. Cali vs. Barranquilla (hora local, GMT−5)</p>
+    </div>
+    <div class="date-ctl">
+      <label for="fecha">Fecha</label>
+      <input type="date" id="fecha">
+      <button id="hoy" type="button">Hoy</button>
+    </div>
+  </header>
+
+  <div class="cards" id="cards"></div>
+
+  <section class="strip">
+    <h2>Los tres amaneceres en la misma línea de tiempo</h2>
+    <p id="strip-desc"></p>
+    <svg id="strip-svg" viewBox="0 0 920 150" role="img" aria-label="Comparación de horas de amanecer en una línea de tiempo"></svg>
+  </section>
+
+  <footer>Cálculo astronómico local (algoritmo NOAA, precisión ±1 min). Las tres ciudades comparten zona horaria America/Bogota; la diferencia la marcan la longitud y la latitud.</footer>
+</div>
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+const CITIES = [
+  { id: 'bogota',       name: 'Bogotá',       lat: 4.7110,  lng: -74.0721, color: 'var(--bogota)' },
+  { id: 'cali',         name: 'Cali',         lat: 3.4516,  lng: -76.5320, color: 'var(--cali)' },
+  { id: 'barranquilla', name: 'Barranquilla', lat: 10.9685, lng: -74.7813, color: 'var(--barranquilla)' },
+];
+const TZ = 'America/Bogota';
+
+// --- Cálculo solar (algoritmo tipo SunCalc / NOAA) -------------------------
+const rad = Math.PI / 180, dayMs = 86400000, J1970 = 2440588, J2000 = 2451545;
+function sunTimes(date, lat, lng) {
+  const toJulian = d => d.valueOf() / dayMs - 0.5 + J1970;
+  const fromJulian = j => new Date((j + 0.5 - J1970) * dayMs);
+  const lw = rad * -lng, phi = rad * lat;
+  const d = toJulian(date) - J2000;
+  const n = Math.round(d - 0.0009 - lw / (2 * Math.PI));
+  const ds = 0.0009 + lw / (2 * Math.PI) + n;
+  const M = rad * (357.5291 + 0.98560028 * ds);
+  const C = rad * (1.9148 * Math.sin(M) + 0.02 * Math.sin(2 * M) + 0.0003 * Math.sin(3 * M));
+  const L = M + C + rad * 102.9372 + Math.PI;
+  const dec = Math.asin(Math.sin(L) * Math.sin(rad * 23.4397));
+  const Jnoon = J2000 + ds + 0.0053 * Math.sin(M) - 0.0069 * Math.sin(2 * L);
+  const h0 = rad * -0.833; // borde superior del disco solar + refracción
+  const cosH = (Math.sin(h0) - Math.sin(phi) * Math.sin(dec)) / (Math.cos(phi) * Math.cos(dec));
+  const H = Math.acos(Math.min(1, Math.max(-1, cosH)));
+  const Jset = J2000 + (0.0009 + (H + lw) / (2 * Math.PI) + n) + 0.0053 * Math.sin(M) - 0.0069 * Math.sin(2 * L);
+  const Jrise = Jnoon - (Jset - Jnoon);
+  return { sunrise: fromJulian(Jrise), sunset: fromJulian(Jset) };
+}
+
+// --- Formato ----------------------------------------------------------------
+const fmtTime = new Intl.DateTimeFormat('es-CO', { timeZone: TZ, hour: 'numeric', minute: '2-digit', hour12: true });
+const fmtDateLong = new Intl.DateTimeFormat('es-CO', { timeZone: TZ, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+function timeParts(d) {
+  const parts = fmtTime.formatToParts(d);
+  const get = t => parts.filter(p => p.type === t).map(p => p.value).join('');
+  return { hm: get('hour') + ':' + get('minute'), ampm: get('dayPeriod').replace(/\./g, '').trim() };
+}
+function durationHM(ms) {
+  const min = Math.round(ms / 60000);
+  return Math.floor(min / 60) + ' h ' + String(min % 60).padStart(2, '0') + ' min';
+}
+function todayBogotaISO() {
+  const p = new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+  return p; // en-CA da YYYY-MM-DD
+}
+
+// --- Render ------------------------------------------------------------------
+const cardsEl = document.getElementById('cards');
+const svgEl = document.getElementById('strip-svg');
+const tooltip = document.getElementById('tooltip');
+const dateInput = document.getElementById('fecha');
+
+function render(isoDate) {
+  // mediodía local de Bogotá de esa fecha, ancla estable para el cálculo
+  const anchor = new Date(isoDate + 'T12:00:00-05:00');
+
+  const rows = CITIES.map(c => {
+    const t = sunTimes(anchor, c.lat, c.lng);
+    return { ...c, ...t };
+  });
+  const earliest = rows.reduce((a, b) => a.sunrise <= b.sunrise ? a : b);
+
+  document.querySelector('.subtitle').textContent =
+    'Salida del sol el ' + fmtDateLong.format(anchor) + ' · hora local (GMT−5)';
+
+  cardsEl.innerHTML = rows.map(r => {
+    const rise = timeParts(r.sunrise), set = timeParts(r.sunset);
+    const deltaMin = Math.round((r.sunrise - earliest.sunrise) / 60000);
+    const delta = r === earliest
+      ? '☀️ La primera en amanecer'
+      : '+' + deltaMin + ' min después de ' + earliest.name;
+    return `
+    <article class="card">
+      <div class="city"><span class="dot" style="background:${r.color}"></span>${r.name}</div>
+      <div class="kicker">Amanece a las</div>
+      <div class="value">${rise.hm}<span class="ampm">${rise.ampm}</span></div>
+      <span class="delta">${delta}</span>
+      <div class="meta">
+        <div>Atardecer<b>${set.hm} ${set.ampm}</b></div>
+        <div>Duración del día<b>${durationHM(r.sunset - r.sunrise)}</b></div>
+      </div>
+    </article>`;
+  }).join('');
+
+  drawStrip(rows, earliest);
+}
+
+function drawStrip(rows, earliest) {
+  const W = 920, H = 150, padL = 40, padR = 40, axisY = 110;
+  const times = rows.map(r => r.sunrise.getTime());
+  const min = Math.min(...times), max = Math.max(...times);
+  const pad = Math.max(5 * 60000, (max - min) * 0.25);
+  const t0 = Math.floor((min - pad) / 300000) * 300000;       // redondea a 5 min
+  const t1 = Math.ceil((max + pad) / 300000) * 300000;
+  const x = t => padL + (t - t0) / (t1 - t0) * (W - padL - padR);
+
+  let s = '';
+  // eje + ticks cada 5 min
+  s += `<line x1="${padL}" y1="${axisY}" x2="${W - padR}" y2="${axisY}" stroke="var(--baseline)" stroke-width="1"/>`;
+  for (let t = t0; t <= t1; t += 300000) {
+    const xt = x(t);
+    s += `<line x1="${xt}" y1="${axisY - 4}" x2="${xt}" y2="${axisY + 4}" stroke="var(--baseline)" stroke-width="1"/>`;
+    const tp = timeParts(new Date(t));
+    s += `<text x="${xt}" y="${axisY + 22}" text-anchor="middle" font-size="12" fill="var(--text-muted)">${tp.hm}</text>`;
+  }
+  // puntos con etiqueta directa, alturas alternadas para evitar choques
+  const sorted = [...rows].sort((a, b) => a.sunrise - b.sunrise);
+  sorted.forEach((r, i) => {
+    const cx = x(r.sunrise.getTime());
+    const labelY = i % 2 === 0 ? axisY - 58 : axisY - 30;
+    const tp = timeParts(r.sunrise);
+    s += `<line x1="${cx}" y1="${labelY + 8}" x2="${cx}" y2="${axisY}" stroke="var(--gridline)" stroke-width="1"/>`;
+    s += `<circle class="mark" data-city="${r.name}" data-time="${tp.hm} ${tp.ampm}" cx="${cx}" cy="${axisY}" r="7" fill="${r.color}" stroke="var(--surface-1)" stroke-width="2"/>`;
+    s += `<text x="${cx}" y="${labelY - 6}" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-primary)">${r.name}</text>`;
+    s += `<text x="${cx}" y="${labelY + 6}" text-anchor="middle" font-size="12" fill="var(--text-secondary)">${tp.hm} ${tp.ampm}</text>`;
+  });
+  svgEl.innerHTML = s;
+
+  const span = Math.round((max - min) / 60000);
+  document.getElementById('strip-desc').textContent =
+    span === 0
+      ? 'Hoy las tres ciudades amanecen prácticamente al mismo tiempo.'
+      : `Entre la primera (${earliest.name}) y la última hay ${span} minutos de diferencia.`;
+
+  svgEl.querySelectorAll('.mark').forEach(m => {
+    m.addEventListener('mousemove', e => {
+      tooltip.innerHTML = `${m.dataset.city} · amanece a las <b>${m.dataset.time}</b>`;
+      tooltip.style.left = (e.clientX + 12) + 'px';
+      tooltip.style.top = (e.clientY - 34) + 'px';
+      tooltip.classList.add('show');
+    });
+    m.addEventListener('mouseleave', () => tooltip.classList.remove('show'));
+  });
+}
+
+// --- Init --------------------------------------------------------------------
+dateInput.value = todayBogotaISO();
+dateInput.addEventListener('change', () => { if (dateInput.value) render(dateInput.value); });
+document.getElementById('hoy').addEventListener('click', () => {
+  dateInput.value = todayBogotaISO();
+  render(dateInput.value);
+});
+render(dateInput.value);
+</script>
+</body>
+</html>
