@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Monitor hora amanecer — Bogotá · Cali · Barranquilla</title>
+<title>Monitor hora amanecer — Comparador de dos ciudades</title>
 <style>
   :root {
     --page:           #f9f9f7;
@@ -14,10 +14,10 @@
     --gridline:       #e1e0d9;
     --baseline:       #c3c2b7;
     --border:         rgba(11,11,11,0.10);
-    --bogota:         #2a78d6;
-    --cali:           #1baf7a;
-    --barranquilla:   #eda100;
+    --color-a:        #2a78d6;
+    --color-b:        #1baf7a;
     --chip-bg:        #f0efec;
+    --accent:         #2a78d6;
   }
   @media (prefers-color-scheme: dark) {
     :root {
@@ -29,10 +29,10 @@
       --gridline:       #2c2c2a;
       --baseline:       #383835;
       --border:         rgba(255,255,255,0.10);
-      --bogota:         #3987e5;
-      --cali:           #199e70;
-      --barranquilla:   #c98500;
+      --color-a:        #3987e5;
+      --color-b:        #199e70;
       --chip-bg:        #383835;
+      --accent:         #3987e5;
     }
   }
   * { box-sizing: border-box; }
@@ -43,31 +43,52 @@
     font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
     -webkit-font-smoothing: antialiased;
   }
-  .wrap { max-width: 960px; margin: 0 auto; padding: 32px 20px 48px; }
+  .wrap { max-width: 800px; margin: 0 auto; padding: 32px 20px 48px; }
 
-  header { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 16px; margin-bottom: 24px; }
-  header .titles { flex: 1 1 auto; min-width: 240px; }
+  header { margin-bottom: 24px; }
   h1 { font-size: 22px; font-weight: 650; margin: 0 0 4px; }
-  .subtitle { font-size: 14px; color: var(--text-secondary); margin: 0; }
+  .subtitle { font-size: 14px; color: var(--text-secondary); margin: 0 0 20px; }
 
-  .date-ctl { display: flex; align-items: center; gap: 8px; }
-  .date-ctl label { font-size: 13px; color: var(--text-secondary); }
-  .date-ctl input[type="date"] {
-    font: inherit; font-size: 14px; color: var(--text-primary);
-    background: var(--surface-1); border: 1px solid var(--border);
-    border-radius: 8px; padding: 7px 10px;
+  .controls {
+    display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end;
+    padding: 16px 20px; background: var(--surface-1);
+    border: 1px solid var(--border); border-radius: 12px; margin-bottom: 20px;
   }
-  .date-ctl input[type="date"],
+  .control-group { display: flex; flex-direction: column; gap: 4px; }
+  .control-group label { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .control-group select, .control-group input[type="date"] {
+    font: inherit; font-size: 14px; color: var(--text-primary);
+    background: var(--page); border: 1px solid var(--border);
+    border-radius: 8px; padding: 9px 12px; min-width: 170px; cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23898781' fill='none' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 32px;
+  }
+  .control-group select:focus, .control-group input[type="date"]:focus {
+    outline: 2px solid var(--accent); outline-offset: 1px;
+  }
+
+  .date-ctl { display: flex; align-items: flex-end; gap: 8px; }
   .date-ctl button {
     font: inherit; font-size: 14px; color: var(--text-primary);
     background: var(--surface-1); border: 1px solid var(--border);
-    border-radius: 8px; padding: 10px 16px; cursor: pointer;
+    border-radius: 8px; padding: 9px 16px; cursor: pointer;
   }
-  .date-ctl input[type="date"] { color: var(--text-primary); }
-  .date-ctl button:hover { color: var(--text-primary); }
+  .date-ctl button:hover { background: var(--chip-bg); }
 
-  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-  @media (max-width: 720px) { .cards { grid-template-columns: 1fr; } }
+  .swap-btn {
+    display: flex; align-items: center; justify-content: center;
+    align-self: flex-end; margin-bottom: 2px;
+    background: var(--chip-bg); border: 1px solid var(--border);
+    border-radius: 50%; width: 36px; height: 36px; cursor: pointer;
+    font-size: 16px; line-height: 1; color: var(--text-secondary);
+  }
+  .swap-btn:hover { color: var(--text-primary); background: var(--border); }
+
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 600px) { .cards { grid-template-columns: 1fr; } }
 
   .card {
     background: var(--surface-1);
@@ -77,7 +98,7 @@
   }
   .card .city { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; }
   .card .dot { width: 10px; height: 10px; border-radius: 50%; flex: 0 0 auto; }
-  .card .value { font-size: 40px; font-weight: 650; line-height: 1.1; margin: 12px 0 2px; letter-spacing: -0.5px; }
+  .card .value { font-size: 44px; font-weight: 650; line-height: 1.1; margin: 12px 0 2px; letter-spacing: -0.5px; }
   .card .ampm { font-size: 18px; font-weight: 500; color: var(--text-secondary); margin-left: 4px; }
   .card .kicker { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; margin-top: 14px; }
   .card .delta {
@@ -108,45 +129,81 @@
   .tooltip.show { opacity: 1; }
   .tooltip b { font-variant-numeric: tabular-nums; }
 
+  .placeholder {
+    text-align: center; padding: 60px 20px;
+    background: var(--surface-1); border: 1px solid var(--border);
+    border-radius: 12px; color: var(--text-muted);
+  }
+  .placeholder p { font-size: 14px; margin: 0; }
+
   footer { margin-top: 20px; font-size: 12px; color: var(--text-muted); }
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <div class="titles">
-      <h1>🌅 Amanecer, bello amanecer</h1>
-      <p class="subtitle">Comparativo de la hora de salida del sol · Bogotá vs. Cali vs. Barranquilla (hora local, GMT−5)</p>
-    </div>
-    <div class="date-ctl">
-      <label for="fecha">Fecha</label>
-      <input type="date" id="fecha">
-      <button id="hoy" type="button">Hoy</button>
-    </div>
+    <h1>🌅 Amanecer, bello amanecer</h1>
+    <p class="subtitle" id="subtitle-desc">Compará la hora de salida del sol entre dos ciudades de Colombia (hora local, GMT−5)</p>
   </header>
+
+  <div class="controls">
+    <div class="control-group">
+      <label for="cityA">Ciudad 1</label>
+      <select id="cityA"></select>
+    </div>
+    <button class="swap-btn" id="swapBtn" title="Intercambiar ciudades" aria-label="Intercambiar ciudades">⇄</button>
+    <div class="control-group">
+      <label for="cityB">Ciudad 2</label>
+      <select id="cityB"></select>
+    </div>
+    <div class="control-group">
+      <label for="fecha">Fecha</label>
+      <div class="date-ctl">
+        <input type="date" id="fecha">
+        <button id="hoy" type="button">Hoy</button>
+      </div>
+    </div>
+  </div>
 
   <div class="cards" id="cards"></div>
 
-  <section class="strip">
-    <h2>Los tres amaneceres en la misma línea de tiempo</h2>
+  <section class="strip" id="strip-section">
+    <h2>Comparación en línea de tiempo</h2>
     <p id="strip-desc"></p>
     <svg id="strip-svg" viewBox="0 0 920 150" role="img" aria-label="Comparación de horas de amanecer en una línea de tiempo"></svg>
   </section>
 
-  <footer>Cálculo astronómico local (algoritmo NOAA, precisión ±1 min). Las tres ciudades comparten zona horaria America/Bogota; la diferencia la marcan la longitud y la latitud.</footer>
+  <footer>Cálculo astronómico local (algoritmo NOAA, precisión ±1 min). La diferencia entre ciudades la marcan la longitud y la latitud, compartiendo todas la zona horaria America/Bogota.</footer>
 </div>
 <div class="tooltip" id="tooltip"></div>
 
 <script>
 const CITIES = [
-  { id: 'bogota',       name: 'Bogotá',       lat: 4.7110,  lng: -74.0721, color: 'var(--bogota)' },
-  { id: 'cali',         name: 'Cali',         lat: 3.4516,  lng: -76.5320, color: 'var(--cali)' },
-  { id: 'barranquilla', name: 'Barranquilla', lat: 10.9685, lng: -74.7813, color: 'var(--barranquilla)' },
+  { id: 'bogota',       name: 'Bogotá',       lat: 4.7110,  lng: -74.0721 },
+  { id: 'medellin',     name: 'Medellín',     lat: 6.2476,  lng: -75.5658 },
+  { id: 'cali',         name: 'Cali',         lat: 3.4516,  lng: -76.5320 },
+  { id: 'barranquilla', name: 'Barranquilla', lat: 10.9685, lng: -74.7813 },
+  { id: 'cartagena',    name: 'Cartagena',    lat: 10.3910, lng: -75.5144 },
+  { id: 'bucaramanga',  name: 'Bucaramanga',  lat: 7.1193,  lng: -73.1227 },
+  { id: 'santa-marta',  name: 'Santa Marta',  lat: 11.2408, lng: -74.1990 },
+  { id: 'pereira',      name: 'Pereira',      lat: 4.8087,  lng: -75.6906 },
+  { id: 'cucuta',       name: 'Cúcuta',       lat: 7.8891,  lng: -72.4967 },
+  { id: 'manizales',    name: 'Manizales',    lat: 5.0703,  lng: -75.5138 },
+  { id: 'villavicencio',name: 'Villavicencio',lat: 4.1420,  lng: -73.6266 },
+  { id: 'ibague',       name: 'Ibagué',       lat: 4.4447,  lng: -75.2424 },
+  { id: 'pasto',        name: 'Pasto',        lat: 1.2059,  lng: -77.2856 },
+  { id: 'monteria',     name: 'Montería',     lat: 8.7479,  lng: -75.8814 },
+  { id: 'valledupar',   name: 'Valledupar',   lat: 10.4737, lng: -73.2535 },
+  { id: 'neiva',        name: 'Neiva',        lat: 2.9273,  lng: -75.2818 },
+  { id: 'armenia',      name: 'Armenia',      lat: 4.5339,  lng: -75.6811 },
+  { id: 'popayan',      name: 'Popayán',      lat: 2.4448,  lng: -76.6147 },
+  { id: 'sincelejo',    name: 'Sincelejo',    lat: 9.3047,  lng: -75.3978 },
+  { id: 'tunja',        name: 'Tunja',        lat: 5.5446,  lng: -73.3573 },
 ];
-const TZ = 'America/Bogota';
 
-// --- Cálculo solar (algoritmo tipo SunCalc / NOAA) -------------------------
+const TZ = 'America/Bogota';
 const rad = Math.PI / 180, dayMs = 86400000, J1970 = 2440588, J2000 = 2451545;
+
 function sunTimes(date, lat, lng) {
   const toJulian = d => d.valueOf() / dayMs - 0.5 + J1970;
   const fromJulian = j => new Date((j + 0.5 - J1970) * dayMs);
@@ -159,7 +216,7 @@ function sunTimes(date, lat, lng) {
   const L = M + C + rad * 102.9372 + Math.PI;
   const dec = Math.asin(Math.sin(L) * Math.sin(rad * 23.4397));
   const Jnoon = J2000 + ds + 0.0053 * Math.sin(M) - 0.0069 * Math.sin(2 * L);
-  const h0 = rad * -0.833; // borde superior del disco solar + refracción
+  const h0 = rad * -0.833;
   const cosH = (Math.sin(h0) - Math.sin(phi) * Math.sin(dec)) / (Math.cos(phi) * Math.cos(dec));
   const H = Math.acos(Math.min(1, Math.max(-1, cosH)));
   const Jset = J2000 + (0.0009 + (H + lw) / (2 * Math.PI) + n) + 0.0053 * Math.sin(M) - 0.0069 * Math.sin(2 * L);
@@ -167,7 +224,6 @@ function sunTimes(date, lat, lng) {
   return { sunrise: fromJulian(Jrise), sunset: fromJulian(Jset) };
 }
 
-// --- Formato ----------------------------------------------------------------
 const fmtTime = new Intl.DateTimeFormat('es-CO', { timeZone: TZ, hour: 'numeric', minute: '2-digit', hour12: true });
 const fmtDateLong = new Intl.DateTimeFormat('es-CO', { timeZone: TZ, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
@@ -181,34 +237,65 @@ function durationHM(ms) {
   return Math.floor(min / 60) + ' h ' + String(min % 60).padStart(2, '0') + ' min';
 }
 function todayBogotaISO() {
-  const p = new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
-  return p; // en-CA da YYYY-MM-DD
+  return new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 }
 
-// --- Render ------------------------------------------------------------------
 const cardsEl = document.getElementById('cards');
+const stripSection = document.getElementById('strip-section');
 const svgEl = document.getElementById('strip-svg');
 const tooltip = document.getElementById('tooltip');
 const dateInput = document.getElementById('fecha');
+const selA = document.getElementById('cityA');
+const selB = document.getElementById('cityB');
+
+function populateSelects() {
+  const opts = CITIES.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  selA.innerHTML = opts;
+  selB.innerHTML = opts;
+  const a = CITIES.find(c => c.id === 'bogota');
+  const b = CITIES.find(c => c.id === 'cali');
+  selA.value = a ? a.id : CITIES[0].id;
+  selB.value = b ? b.id : CITIES[1].id;
+}
+
+function getSelected() {
+  const a = CITIES.find(c => c.id === selA.value);
+  const b = CITIES.find(c => c.id === selB.value);
+  if (!a || !b || a.id === b.id) return null;
+  return { a, b };
+}
+
+const PALETTE = ['#2a78d6', '#1baf7a', '#eda100', '#d94646', '#8b5cf6', '#ec4899'];
 
 function render(isoDate) {
-  // mediodía local de Bogotá de esa fecha, ancla estable para el cálculo
+  const selected = getSelected();
   const anchor = new Date(isoDate + 'T12:00:00-05:00');
 
-  const rows = CITIES.map(c => {
-    const t = sunTimes(anchor, c.lat, c.lng);
-    return { ...c, ...t };
-  });
-  const earliest = rows.reduce((a, b) => a.sunrise <= b.sunrise ? a : b);
+  if (!selected) {
+    cardsEl.innerHTML = '<div class="placeholder"><p>Seleccioná dos ciudades diferentes para comparar sus horas de amanecer.</p></div>';
+    stripSection.style.display = 'none';
+    document.getElementById('subtitle-desc').textContent = 'Compará la hora de salida del sol entre dos ciudades de Colombia (hora local, GMT−5)';
+    return;
+  }
 
-  document.querySelector('.subtitle').textContent =
+  stripSection.style.display = '';
+
+  const rows = [selected.a, selected.b].map((c, i) => {
+    const t = sunTimes(anchor, c.lat, c.lng);
+    return { ...c, color: PALETTE[i], sunrise: t.sunrise, sunset: t.sunset };
+  });
+
+  const earliest = rows.reduce((a, b) => a.sunrise <= b.sunrise ? a : b);
+  const latest   = rows.reduce((a, b) => a.sunrise >= b.sunrise ? a : b);
+
+  document.getElementById('subtitle-desc').textContent =
     'Salida del sol el ' + fmtDateLong.format(anchor) + ' · hora local (GMT−5)';
 
   cardsEl.innerHTML = rows.map(r => {
     const rise = timeParts(r.sunrise), set = timeParts(r.sunset);
     const deltaMin = Math.round((r.sunrise - earliest.sunrise) / 60000);
     const delta = r === earliest
-      ? '☀️ La primera en amanecer'
+      ? '☀️ Amanece primero'
       : '+' + deltaMin + ' min después de ' + earliest.name;
     return `
     <article class="card">
@@ -231,12 +318,11 @@ function drawStrip(rows, earliest) {
   const times = rows.map(r => r.sunrise.getTime());
   const min = Math.min(...times), max = Math.max(...times);
   const pad = Math.max(5 * 60000, (max - min) * 0.25);
-  const t0 = Math.floor((min - pad) / 300000) * 300000;       // redondea a 5 min
+  const t0 = Math.floor((min - pad) / 300000) * 300000;
   const t1 = Math.ceil((max + pad) / 300000) * 300000;
   const x = t => padL + (t - t0) / (t1 - t0) * (W - padL - padR);
 
   let s = '';
-  // eje + ticks cada 5 min
   s += `<line x1="${padL}" y1="${axisY}" x2="${W - padR}" y2="${axisY}" stroke="var(--baseline)" stroke-width="1"/>`;
   for (let t = t0; t <= t1; t += 300000) {
     const xt = x(t);
@@ -244,7 +330,7 @@ function drawStrip(rows, earliest) {
     const tp = timeParts(new Date(t));
     s += `<text x="${xt}" y="${axisY + 22}" text-anchor="middle" font-size="12" fill="var(--text-muted)">${tp.hm}</text>`;
   }
-  // puntos con etiqueta directa, alturas alternadas para evitar choques
+
   const sorted = [...rows].sort((a, b) => a.sunrise - b.sunrise);
   sorted.forEach((r, i) => {
     const cx = x(r.sunrise.getTime());
@@ -252,7 +338,7 @@ function drawStrip(rows, earliest) {
     const tp = timeParts(r.sunrise);
     s += `<line x1="${cx}" y1="${labelY + 8}" x2="${cx}" y2="${axisY}" stroke="var(--gridline)" stroke-width="1"/>`;
     s += `<g class="mark-group" data-city="${r.name}" data-time="${tp.hm} ${tp.ampm}">`;
-    s += `<circle class="mark-bg" cx="${cx}" cy="${axisY}" r="22" fill="transparent"/>`;
+    s += `<circle class="mark-bg" cx="${cx}" cy="${axisY}" r="24" fill="transparent"/>`;
     s += `<circle class="mark" cx="${cx}" cy="${axisY}" r="7" fill="${r.color}" stroke="var(--surface-1)" stroke-width="2"/>`;
     s += `</g>`;
     s += `<text x="${cx}" y="${labelY - 6}" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-primary)">${r.name}</text>`;
@@ -260,11 +346,11 @@ function drawStrip(rows, earliest) {
   });
   svgEl.innerHTML = s;
 
-  const span = Math.round((max - min) / 60000);
+  const span = Math.round((Math.max(...times) - Math.min(...times)) / 60000);
   document.getElementById('strip-desc').textContent =
     span === 0
-      ? 'Hoy las tres ciudades amanecen prácticamente al mismo tiempo.'
-      : `Entre la primera (${earliest.name}) y la última hay ${span} minutos de diferencia.`;
+      ? 'Las dos ciudades amanecen prácticamente a la misma hora.'
+      : `Entre ${earliest.name} (primero) y ${sorted[sorted.length - 1].name} hay ${span} minutos de diferencia.`;
 
   svgEl.querySelectorAll('.mark-group').forEach(g => {
     g.addEventListener('mousemove', e => {
@@ -277,14 +363,26 @@ function drawStrip(rows, earliest) {
   });
 }
 
-// --- Init --------------------------------------------------------------------
+function refresh() { render(dateInput.value); }
+
 dateInput.value = todayBogotaISO();
-dateInput.addEventListener('change', () => { if (dateInput.value) render(dateInput.value); });
+populateSelects();
+
+selA.addEventListener('change', refresh);
+selB.addEventListener('change', refresh);
+dateInput.addEventListener('change', () => { if (dateInput.value) refresh(); });
 document.getElementById('hoy').addEventListener('click', () => {
   dateInput.value = todayBogotaISO();
-  render(dateInput.value);
+  refresh();
 });
-render(dateInput.value);
+document.getElementById('swapBtn').addEventListener('click', () => {
+  const tmp = selA.value;
+  selA.value = selB.value;
+  selB.value = tmp;
+  refresh();
+});
+
+refresh();
 </script>
 </body>
 </html>
